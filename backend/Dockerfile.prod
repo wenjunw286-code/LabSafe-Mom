@@ -1,0 +1,50 @@
+# ── Stage 1: Build ──────────────────────────────────────────────
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Install system dependencies for PDF generation (optional)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# ── Stage 2: Runtime ────────────────────────────────────────────
+FROM python:3.11-slim AS runtime
+
+# Create non-root user
+RUN groupadd -r labsafe && useradd -r -g labsafe -d /app labsafe
+
+WORKDIR /app
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /usr/local
+
+# Copy application code
+COPY --chown=labsafe:labsafe . .
+
+# Create uploads directory
+RUN mkdir -p /app/uploads && chown labsafe:labsafe /app/uploads
+
+USER labsafe
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+
+# Production uvicorn with multiple workers
+CMD ["python", "-m", "uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \
+     "--log-level", "info", \
+     "--no-access-log"]

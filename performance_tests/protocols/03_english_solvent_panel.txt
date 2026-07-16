@@ -1,0 +1,30 @@
+Performance Test Protocol 03: English organic solvent panel
+
+Purpose
+Stress English synonym matching, CAS extraction, volatile solvent rules, and mixed hazard levels.
+
+Reagents
+Formaldehyde, CAS 50-00-0, 20 mL, fixation, open container.
+Methanol, CAS 67-56-1, 150 mL, fixation and washing.
+Chloroform, CAS 67-66-3, 30 mL, organic extraction.
+Dichloromethane DCM, CAS 75-09-2, 30 mL, extraction.
+Toluene, CAS 108-88-3, 20 mL, solvent wash.
+Xylene, CAS 1330-20-7, 40 mL, clearing.
+Acetonitrile, CAS 75-05-8, 100 mL, HPLC mobile phase.
+Ethanol, CAS 64-17-5, 100 mL, surface cleaning.
+
+Procedure
+Prepare samples on an open bench.
+Perform solvent extraction in uncapped glass tubes.
+Vortex for 30 seconds and centrifuge at room temperature.
+Transfer organic phase by pipette.
+The fume hood is not running during part of the operation.
+
+Exposure notes
+Operator is pregnant.
+Solvent work is repeated daily for one week.
+No respiratory protection is used.
+
+Expected
+Overall risk should be high or critical. Volatile chlorinated and aromatic solvents should be prioritized.
+

@@ -1,0 +1,676 @@
+# LabSafe Mom v3.0 — Deterministic Rule Engine Rules
+# =====================================================
+# All risk scores are computed deterministically from these rules.
+# The LLM is NEVER involved in risk scoring.
+#
+# Priority: higher values fire first. In case of score conflict,
+# the highest-priority rule wins (not additive).
+#
+# Score contributions are per-population: pregnancy, fertility, lactation.
+# Final score = sum of all fired rule contributions, clamped to [0, 100].
+# Risk level: >=75=Critical, >=50=High, >=25=Moderate, <25=Low.
+
+"version": "3.0.0"
+"rules":
+- "id": "R001"
+  "name": "known_reproductive_toxin"
+  "description": "Substance is classified as a known reproductive toxin"
+  "priority": 100
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "field_check"
+    "field": "reproductive_toxin"
+    "operator": "equals"
+    "value": true
+  "score_contribution":
+    "pregnancy": 30
+    "fertility": 25
+    "lactation": 20
+  "evidence_note": "Classified as reproductive toxin per NIOSH/OSHA/ECHA"
+- "id": "R002"
+  "name": "teratogen_with_placental_transfer"
+  "description": "Known teratogen with documented placental transfer"
+  "priority": 95
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "teratogen"
+      "operator": "equals"
+      "value": true
+    - "type": "field_check"
+      "field": "placental_transfer"
+      "operator": "equals"
+      "value": true
+  "score_contribution":
+    "pregnancy": 35
+    "fertility": 10
+    "lactation": 10
+  "evidence_note": "Documented teratogen with placental transfer evidence"
+- "id": "R003"
+  "name": "lead_compound_critical"
+  "description": "Lead and lead compounds automatically trigger Critical risk"
+  "priority": 200
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "compound"
+    "operator": "any"
+    "conditions":
+    - "type": "field_check"
+      "field": "cas_number"
+      "operator": "matches_regex"
+      "value": "^7439-92-1"
+    - "type": "field_check"
+      "field": "canonical_name_en"
+      "operator": "contains"
+      "value": "lead"
+  "score_contribution":
+    "pregnancy": 50
+    "fertility": 50
+    "lactation": 50
+  "evidence_note": "Lead is a known reproductive toxin — OSHA Lead Standard 29 CFR 1910.1025"
+- "id": "R004"
+  "name": "teratogen_any"
+  "description": "Known teratogen (any evidence level)"
+  "priority": 85
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "field_check"
+    "field": "teratogen"
+    "operator": "equals"
+    "value": true
+  "score_contribution":
+    "pregnancy": 25
+    "fertility": 10
+    "lactation": 10
+  "evidence_note": "Classified as teratogen per IARC/NIOSH/ECHA"
+- "id": "R005"
+  "name": "mutagen_with_ttc"
+  "description": "Known mutagen — elevated risk for trying-to-conceive"
+  "priority": 85
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "mutagen"
+      "operator": "equals"
+      "value": true
+  "score_contribution":
+    "pregnancy": 15
+    "fertility": 25
+    "lactation": 10
+  "evidence_note": "Mutagenic — risk to germ cells and developing embryo"
+- "id": "R006"
+  "name": "pregnancy_category_x"
+  "description": "FDA Pregnancy Category X — contraindicated in pregnancy"
+  "priority": 200
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "field_check"
+    "field": "pregnancy_category"
+    "operator": "equals"
+    "value": "X"
+  "score_contribution":
+    "pregnancy": 50
+    "fertility": 30
+    "lactation": 25
+  "evidence_note": "FDA Pregnancy Category X — contraindicated"
+- "id": "R007"
+  "name": "pregnancy_category_d"
+  "description": "FDA Pregnancy Category D — evidence of human fetal risk"
+  "priority": 100
+  "category": "reproductive_toxicity"
+  "condition":
+    "type": "field_check"
+    "field": "pregnancy_category"
+    "operator": "equals"
+    "value": "D"
+  "score_contribution":
+    "pregnancy": 35
+    "fertility": 20
+    "lactation": 15
+  "evidence_note": "FDA Pregnancy Category D — positive evidence of human fetal risk"
+- "id": "R008"
+  "name": "legacy_high_or_critical_risk"
+  "description": "Local reproductive safety database classifies this substance as high or critical risk"
+  "priority": 120
+  "category": "local_knowledge_base"
+  "condition":
+    "type": "compound"
+    "operator": "any"
+    "conditions":
+    - "type": "field_check"
+      "field": "pregnancy_risk"
+      "operator": "matches_regex"
+      "value": "High|Critical"
+    - "type": "field_check"
+      "field": "fertility_risk"
+      "operator": "matches_regex"
+      "value": "High|Critical"
+    - "type": "field_check"
+      "field": "lactation_risk"
+      "operator": "matches_regex"
+      "value": "High|Critical"
+  "score_contribution":
+    "pregnancy": 35
+    "fertility": 30
+    "lactation": 25
+  "evidence_note": "Local curated reproductive-risk database, mapped from SDS/NIOSH/OSHA/IARC/PubChem review"
+- "id": "R009"
+  "name": "legacy_moderate_risk"
+  "description": "Local reproductive safety database classifies this substance as moderate risk"
+  "priority": 75
+  "category": "local_knowledge_base"
+  "condition":
+    "type": "compound"
+    "operator": "any"
+    "conditions":
+    - "type": "field_check"
+      "field": "pregnancy_risk"
+      "operator": "contains"
+      "value": "Moderate"
+    - "type": "field_check"
+      "field": "fertility_risk"
+      "operator": "contains"
+      "value": "Moderate"
+    - "type": "field_check"
+      "field": "lactation_risk"
+      "operator": "contains"
+      "value": "Moderate"
+  "score_contribution":
+    "pregnancy": 18
+    "fertility": 15
+    "lactation": 12
+  "evidence_note": "Local curated reproductive-risk database indicates moderate concern"
+- "id": "R010"
+  "name": "iarc_group1_carcinogen"
+  "description": "IARC Group 1 carcinogen with dermal absorption"
+  "priority": 65
+  "category": "carcinogenicity"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "carcinogen_class"
+      "operator": "in"
+      "value":
+      - "1"
+    - "type": "field_check"
+      "field": "dermal_absorption"
+      "operator": "equals"
+      "value": true
+  "score_contribution":
+    "pregnancy": 15
+    "fertility": 15
+    "lactation": 15
+  "evidence_note": "IARC Group 1 carcinogen with significant dermal absorption"
+- "id": "R011"
+  "name": "iarc_group1_carcinogen_any"
+  "description": "IARC Group 1 carcinogen"
+  "priority": 55
+  "category": "carcinogenicity"
+  "condition":
+    "type": "field_check"
+    "field": "carcinogen_class"
+    "operator": "in"
+    "value":
+    - "1"
+    - "2A"
+  "score_contribution":
+    "pregnancy": 10
+    "fertility": 10
+    "lactation": 10
+  "evidence_note": "IARC Group 1 or 2A carcinogen"
+- "id": "R012"
+  "name": "mutagen_any"
+  "description": "Known mutagen"
+  "priority": 50
+  "category": "mutagenicity"
+  "condition":
+    "type": "field_check"
+    "field": "mutagen"
+    "operator": "equals"
+    "value": true
+  "score_contribution":
+    "pregnancy": 10
+    "fertility": 12
+    "lactation": 8
+  "evidence_note": "Documented mutagenicity"
+- "id": "R020"
+  "name": "volatile_open_bench"
+  "description": "Volatile substance handled on open bench (no fume hood)"
+  "priority": 70
+  "category": "exposure_condition"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "volatile"
+      "operator": "equals"
+      "value": true
+    - "type": "exposure_check"
+      "field": "ventilation"
+      "operator": "not_equals"
+      "value": "fume_hood"
+  "score_contribution":
+    "pregnancy": 15
+    "fertility": 10
+    "lactation": 10
+  "evidence_note": "Volatile substance without fume hood containment"
+- "id": "R021"
+  "name": "aerosol_generation"
+  "description": "Operation generates aerosols of hazardous substance"
+  "priority": 65
+  "category": "exposure_condition"
+  "condition":
+    "type": "operation_check"
+    "field": "aerosol_generation"
+    "operator": "equals"
+    "value": true
+  "score_contribution":
+    "pregnancy": 12
+    "fertility": 8
+    "lactation": 8
+  "evidence_note": "Aerosol-generating operation increases inhalation exposure risk"
+- "id": "R022"
+  "name": "powder_toxin"
+  "description": "Weighing powder of toxic substance (LD50 < 500 mg/kg)"
+  "priority": 60
+  "category": "exposure_condition"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "operation_check"
+      "field": "powder_handling"
+      "operator": "equals"
+      "value": true
+    - "type": "field_check"
+      "field": "acute_toxicity_ld50"
+      "operator": "less_than"
+      "value": 500
+  "score_contribution":
+    "pregnancy": 10
+    "fertility": 8
+    "lactation": 8
+  "evidence_note": "Powder handling of toxic substance (LD50 < 500 mg/kg)"
+- "id": "R023"
+  "name": "no_containment"
+  "description": "Operation requiring containment performed without it"
+  "priority": 55
+  "category": "exposure_condition"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "operation_check"
+      "field": "requires_containment"
+      "operator": "equals"
+      "value": true
+    - "type": "exposure_check"
+      "field": "ventilation"
+      "operator": "equals"
+      "value": "open_bench"
+  "score_contribution":
+    "pregnancy": 12
+    "fertility": 8
+    "lactation": 8
+  "evidence_note": "Containment-requiring operation performed without engineering controls"
+- "id": "R024"
+  "name": "high_temperature_volatile"
+  "description": "Heating volatile substance increases inhalation risk"
+  "priority": 55
+  "category": "exposure_condition"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "volatile"
+      "operator": "equals"
+      "value": true
+    - "type": "exposure_check"
+      "field": "temperature"
+      "operator": "equals"
+      "value": "elevated"
+  "score_contribution":
+    "pregnancy": 12
+    "fertility": 8
+    "lactation": 8
+  "evidence_note": "Heating increases vapor pressure and inhalation exposure"
+- "id": "R025"
+  "name": "repeated_exposure"
+  "description": "Repeated or prolonged exposure to hazardous substance"
+  "priority": 40
+  "category": "exposure_condition"
+  "condition":
+    "type": "exposure_check"
+    "field": "frequency"
+    "operator": "in"
+    "value":
+    - "daily"
+    - "weekly"
+    - "continuous"
+  "score_contribution":
+    "pregnancy": 10
+    "fertility": 8
+    "lactation": 5
+  "evidence_note": "Repeated exposure increases cumulative risk"
+- "id": "R026"
+  "name": "high_concentration"
+  "description": "High concentration (>50%) of hazardous substance"
+  "priority": 35
+  "category": "exposure_condition"
+  "condition":
+    "type": "exposure_check"
+    "field": "concentration_pct"
+    "operator": "greater_than"
+    "value": 50
+  "score_contribution":
+    "pregnancy": 8
+    "fertility": 5
+    "lactation": 5
+  "evidence_note": "High concentration increases dose and exposure severity"
+- "id": "R027"
+  "name": "multiple_exposure_routes"
+  "description": "Substance has 3+ exposure routes documented"
+  "priority": 35
+  "category": "exposure_condition"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "operation_check"
+      "field": "secondary_exposure_routes"
+      "operator": "count_greater_than"
+      "value": 2
+  "score_contribution":
+    "pregnancy": 8
+    "fertility": 5
+    "lactation": 5
+  "evidence_note": "Multiple exposure routes increase total body burden"
+- "id": "R030"
+  "name": "formaldehyde_open_bench"
+  "description": "Formaldehyde handled in open container without fume hood"
+  "priority": 85
+  "category": "scenario_specific"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "cas_number"
+      "operator": "equals"
+      "value": "50-00-0"
+    - "type": "exposure_check"
+      "field": "ventilation"
+      "operator": "not_equals"
+      "value": "fume_hood"
+  "score_contribution":
+    "pregnancy": 25
+    "fertility": 20
+    "lactation": 15
+  "evidence_note": "Formaldehyde + open bench = extreme risk. IARC Group 1, known teratogen. Must use fume hood."
+- "id": "R031"
+  "name": "methanol_heating"
+  "description": "Methanol heated — extreme inhalation hazard"
+  "priority": 75
+  "category": "scenario_specific"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "cas_number"
+      "operator": "equals"
+      "value": "67-56-1"
+    - "type": "exposure_check"
+      "field": "temperature"
+      "operator": "equals"
+      "value": "elevated"
+  "score_contribution":
+    "pregnancy": 15
+    "fertility": 12
+    "lactation": 12
+  "evidence_note": "Heated methanol generates high vapor concentrations. NIOSH IDLH: 6000 ppm."
+- "id": "R032"
+  "name": "ethidium_bromide"
+  "description": "Ethidium bromide with gel handling — mutagen exposure"
+  "priority": 70
+  "category": "scenario_specific"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "cas_number"
+      "operator": "equals"
+      "value": "1239-45-8"
+  "score_contribution":
+    "pregnancy": 12
+    "fertility": 12
+    "lactation": 12
+  "evidence_note": "Ethidium bromide is a known mutagen. Use SYBR Safe or GelRed as safer alternatives."
+- "id": "R033"
+  "name": "xylene_open"
+  "description": "Xylene handled without fume hood"
+  "priority": 75
+  "category": "scenario_specific"
+  "condition":
+    "type": "compound"
+    "operator": "all"
+    "conditions":
+    - "type": "field_check"
+      "field": "cas_number"
+      "operator": "matches_regex"
+      "value": "^1330-20-7|^95-47-6|^108-38-3|^106-42-3"
+    - "type": "exposure_check"
+      "field": "ventilation"
+      "operator": "not_equals"
+      "value": "fume_hood"
+  "score_contribution":
+    "pregnancy": 20
+    "fertility": 15
+    "lactation": 15
+  "evidence_note": "Xylene is neurotoxic and a reproductive hazard. OSHA PEL: 100 ppm. Use fume hood."
+- "id": "R034"
+  "name": "chloroform_any"
+  "description": "Chloroform — suspect carcinogen and reproductive toxin"
+  "priority": 80
+  "category": "scenario_specific"
+  "condition":
+    "type": "field_check"
+    "field": "cas_number"
+    "operator": "equals"
+    "value": "67-66-3"
+  "score_contribution":
+    "pregnancy": 20
+    "fertility": 18
+    "lactation": 18
+  "evidence_note": "Chloroform is a suspect carcinogen (IARC 2B) with reproductive toxicity. NIOSH IDLH: 500 ppm."
+- "id": "R035"
+  "name": "acrylamide_monomer"
+  "description": "Acrylamide monomer — neurotoxin and reproductive hazard"
+  "priority": 80
+  "category": "scenario_specific"
+  "condition":
+    "type": "field_check"
+    "field": "cas_number"
+    "operator": "equals"
+    "value": "79-06-1"
+  "score_contribution":
+    "pregnancy": 20
+    "fertility": 15
+    "lactation": 15
+  "evidence_note": "Acrylamide is a neurotoxin and reproductive toxin. Use pre-cast gels to avoid powder handling."
+- "id": "R036"
+  "name": "phenol_any"
+  "description": "Phenol — highly toxic, corrosive, systemic absorption"
+  "priority": 75
+  "category": "scenario_specific"
+  "condition":
+    "type": "field_check"
+    "field": "cas_number"
+    "operator": "equals"
+    "value": "108-95-2"
+  "score_contribution":
+    "pregnancy": 18
+    "fertility": 15
+    "lactation": 15
+  "evidence_note": "Phenol is highly toxic with rapid dermal absorption. Use chloroform:IAA extraction as alternative when\
+    \ possible."
+- "id": "R037"
+  "name": "temed_any"
+  "description": "TEMED — neurotoxic catalyst"
+  "priority": 65
+  "category": "scenario_specific"
+  "condition":
+    "type": "field_check"
+    "field": "cas_number"
+    "operator": "equals"
+    "value": "110-18-9"
+  "score_contribution":
+    "pregnancy": 12
+    "fertility": 10
+    "lactation": 10
+  "evidence_note": "TEMED (TMEDA) is neurotoxic. Use pre-cast gels when possible."
+- "id": "R038"
+  "name": "sodium_azide_toxic_powder"
+  "description": "Sodium azide is acutely toxic; powder handling or direct contact requires high-risk controls"
+  "priority": 85
+  "category": "scenario_specific"
+  "condition":
+    "type": "field_check"
+    "field": "cas_number"
+    "operator": "equals"
+    "value": "26628-22-8"
+  "score_contribution":
+    "pregnancy": 30
+    "fertility": 25
+    "lactation": 25
+  "evidence_note": "Sodium azide is highly acutely toxic; avoid powder contact and use containment."
+- "id": "R050"
+  "name": "fume_hood_present"
+  "description": "Fume hood used — significantly reduces inhalation risk"
+  "priority": 100
+  "category": "protective_factor"
+  "condition":
+    "type": "exposure_check"
+    "field": "ventilation"
+    "operator": "equals"
+    "value": "fume_hood"
+  "score_contribution":
+    "pregnancy": -12
+    "fertility": -8
+    "lactation": -8
+  "evidence_note": "Fume hood provides effective engineering control for volatile substances"
+- "id": "R051"
+  "name": "biosafety_cabinet"
+  "description": "Biosafety cabinet used for biological/chemical work"
+  "priority": 90
+  "category": "protective_factor"
+  "condition":
+    "type": "exposure_check"
+    "field": "ventilation"
+    "operator": "equals"
+    "value": "biosafety_cabinet"
+  "score_contribution":
+    "pregnancy": -10
+    "fertility": -8
+    "lactation": -8
+  "evidence_note": "Biosafety cabinet provides HEPA filtration and containment"
+- "id": "R052"
+  "name": "engineering_controls_documented"
+  "description": "Engineering controls explicitly mentioned in protocol"
+  "priority": 80
+  "category": "protective_factor"
+  "condition":
+    "type": "field_check"
+    "field": "engineering_controls"
+    "operator": "is_not_null"
+  "score_contribution":
+    "pregnancy": -8
+    "fertility": -5
+    "lactation": -5
+  "evidence_note": "Documented engineering controls reduce overall risk"
+- "id": "R053"
+  "name": "glove_box"
+  "description": "Glove box / sealed containment used"
+  "priority": 100
+  "category": "protective_factor"
+  "condition":
+    "type": "exposure_check"
+    "field": "ventilation"
+    "operator": "equals"
+    "value": "glove_box"
+  "score_contribution":
+    "pregnancy": -15
+    "fertility": -10
+    "lactation": -10
+  "evidence_note": "Glove box provides maximum containment"
+- "id": "R054"
+  "name": "low_temperature"
+  "description": "Cold temperature reduces vapor pressure and inhalation risk"
+  "priority": 60
+  "category": "protective_factor"
+  "condition":
+    "type": "exposure_check"
+    "field": "temperature"
+    "operator": "equals"
+    "value": "cold"
+  "score_contribution":
+    "pregnancy": -5
+    "fertility": -3
+    "lactation": -3
+  "evidence_note": "Cold temperature reduces volatility and vapor generation"
+- "id": "R060"
+  "name": "lactation_contraindicated"
+  "description": "Substance contraindicated during breastfeeding per LactMed"
+  "priority": 90
+  "category": "lactation_specific"
+  "condition":
+    "type": "field_check"
+    "field": "lactation_risk_category"
+    "operator": "equals"
+    "value": "Contraindicated"
+  "score_contribution":
+    "pregnancy": 5
+    "fertility": 5
+    "lactation": 35
+  "evidence_note": "Contraindicated during breastfeeding per LactMed"
+- "id": "R061"
+  "name": "lactation_hold_feeding"
+  "description": "Hold feeding recommended per LactMed"
+  "priority": 70
+  "category": "lactation_specific"
+  "condition":
+    "type": "field_check"
+    "field": "lactation_risk_category"
+    "operator": "equals"
+    "value": "Hold Feeding"
+  "score_contribution":
+    "pregnancy": 3
+    "fertility": 3
+    "lactation": 20
+  "evidence_note": "Temporary hold on breastfeeding recommended per LactMed"
+- "id": "R062"
+  "name": "high_dermal_absorption_lactation"
+  "description": "High dermal absorption — risk of transfer to breast milk"
+  "priority": 60
+  "category": "lactation_specific"
+  "condition":
+    "type": "field_check"
+    "field": "dermal_absorption"
+    "operator": "equals"
+    "value": true
+  "score_contribution":
+    "pregnancy": 5
+    "fertility": 3
+    "lactation": 12
+  "evidence_note": "Substances with high dermal absorption may transfer to breast milk"

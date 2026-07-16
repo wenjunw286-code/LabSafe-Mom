@@ -1,0 +1,23 @@
+Protocol: DNA Extraction and PCR
+
+Chemicals:
+- Ethanol (CAS: 64-17-5) 70% solution
+- Sodium chloride (CAS: 7647-14-5) for buffer preparation
+- Tris-HCl buffer, pH 8.0  
+- EDTA 0.5M solution
+- Ethidium bromide (CAS: 1239-45-8) for gel staining
+- Chloroform (CAS: 67-66-3) for organic extraction
+- Isopropanol for DNA precipitation
+
+Procedure:
+1. Weigh 5g of tissue sample
+2. Homogenize tissue in lysis buffer
+3. Add 500ul chloroform, vortex vigorously, centrifuge at 12000rpm for 10 minutes
+4. Transfer aqueous phase to new tube, add equal volume isopropanol
+5. Wash DNA pellet with 1ml 70% ethanol, centrifuge
+6. Resuspend DNA in 50ul TE buffer
+7. Set up PCR reaction with Taq polymerase
+8. Run agarose gel electrophoresis, stain with ethidium bromide
+9. Visualize DNA bands under UV transilluminator
+
+Safety notes: All procedures performed on open bench. Standard lab PPE used.

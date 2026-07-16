@@ -1,0 +1,717 @@
+# LabSafe Mom v3.0 — Laboratory Operation Ontology
+# ================================================
+# Each operation defines trigger keywords (EN + ZH) and automatically
+# inferred exposure routes. The ontology is loaded at startup and used
+# by LabOperationDetector to scan protocol text.
+
+version: "3.0.0"
+
+operations:
+  # ── Chemical Handling ──────────────────────────────────────────
+  - id: OP001
+    name_en: "Fixation"
+    name_zh: "组织固定"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal", "ocular"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 15
+    trigger_keywords_en:
+      - "fix"
+      - "fixation"
+      - "fixative"
+      - "perfusion"
+      - "PFA"
+      - "formalin"
+      - "glutaraldehyde"
+      - "osmium"
+      - "Bouin"
+      - "Carnoy"
+      - "methacarn"
+    trigger_keywords_zh:
+      - "固定"
+      - "灌注"
+      - "甲醛"
+      - "福尔马林"
+      - "PFA"
+      - "戊二醛"
+      - "锇酸"
+      - "Bouin"
+      - "Carnoy"
+
+  - id: OP002
+    name_en: "Staining"
+    name_zh: "染色"
+    category: "chemical_handling"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation", "ocular"]
+    requires_containment: true
+    risk_modifier: 10
+    trigger_keywords_en:
+      - "stain"
+      - "staining"
+      - "dye"
+      - "hematoxylin"
+      - "eosin"
+      - "H&E"
+      - "DAB"
+      - "DAPI"
+      - "Hoechst"
+      - "Coomassie"
+      - "silver stain"
+      - "Nissl"
+      - "cresyl violet"
+      - "toluidine blue"
+      - "Giemsa"
+      - "Wright"
+      - "Periodic acid-Schiff"
+      - "Masson"
+    trigger_keywords_zh:
+      - "染色"
+      - "苏木精"
+      - "伊红"
+      - "H&E"
+      - "DAB"
+      - "DAPI"
+      - "考马斯"
+      - "银染"
+      - "尼氏"
+      - "甲苯胺蓝"
+      - "吉姆萨"
+      - "PAS"
+      - "Masson"
+
+  - id: OP003
+    name_en: "Embedding"
+    name_zh: "包埋"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 10
+    trigger_keywords_en:
+      - "embed"
+      - "embedding"
+      - "paraffin"
+      - "OCT"
+      - "Tissue-Tek"
+      - "resin"
+      - "epon"
+      - "LR White"
+      - "acrylic"
+      - "mounting"
+      - "coverslip"
+    trigger_keywords_zh:
+      - "包埋"
+      - "石蜡"
+      - "OCT"
+      - "树脂"
+      - "封片"
+      - "盖玻片"
+
+  - id: OP004
+    name_en: "DNA/RNA Extraction"
+    name_zh: "核酸提取"
+    category: "chemical_handling"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation", "ocular"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 12
+    trigger_keywords_en:
+      - "extract DNA"
+      - "extract RNA"
+      - "DNA extraction"
+      - "RNA extraction"
+      - "TRIzol"
+      - "phenol-chloroform"
+      - "phenol:chloroform"
+      - "chloroform extraction"
+      - "isopropanol precipitation"
+      - "ethanol precipitation"
+      - "Qiagen"
+      - "miniprep"
+      - "maxiprep"
+      - "gel extraction"
+      - "purification"
+    trigger_keywords_zh:
+      - "提取DNA"
+      - "提取RNA"
+      - "DNA提取"
+      - "RNA提取"
+      - "TRIzol"
+      - "酚氯仿"
+      - "异丙醇沉淀"
+      - "乙醇沉淀"
+      - "胶回收"
+      - "纯化"
+
+  - id: OP005
+    name_en: "Pipetting"
+    name_zh: "移液"
+    category: "chemical_handling"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation"]
+    risk_modifier: 2
+    trigger_keywords_en:
+      - "pipet"
+      - "pipetting"
+      - "aliquot"
+      - "transfer"
+      - "dispense"
+    trigger_keywords_zh:
+      - "移液"
+      - "吸液"
+      - "分装"
+      - "转移液体"
+
+  - id: OP010
+    name_en: "Heating"
+    name_zh: "加热"
+    category: "physical"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal"]
+    volatile_release: true
+    risk_modifier: 8
+    trigger_keywords_en:
+      - "heat"
+      - "heating"
+      - "boil"
+      - "boiling"
+      - "reflux"
+      - "microwave"
+      - "hot plate"
+      - "water bath"
+      - "incubate at"
+      - "autoclave"
+      - "sterilize"
+      - "melt"
+      - "dissolve at"
+    trigger_keywords_zh:
+      - "加热"
+      - "煮沸"
+      - "回流"
+      - "微波"
+      - "水浴"
+      - "高温灭菌"
+      - "高压灭菌"
+      - "溶解在"
+
+  - id: OP011
+    name_en: "Centrifugation"
+    name_zh: "离心"
+    category: "physical"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal"]
+    aerosol_generation: true
+    risk_modifier: 5
+    trigger_keywords_en:
+      - "centrifuge"
+      - "centrifugation"
+      - "spin down"
+      - "pellet"
+      - "supernatant"
+      - "rpm"
+      - "rcf"
+      - "g-force"
+      - "ultracentrifuge"
+    trigger_keywords_zh:
+      - "离心"
+      - "离心机"
+      - "上清"
+      - "沉淀"
+      - "转速"
+
+  - id: OP012
+    name_en: "Autoclaving"
+    name_zh: "高压灭菌"
+    category: "physical"
+    primary_exposure_route: "inhalation"
+    volatile_release: true
+    risk_modifier: 5
+    trigger_keywords_en:
+      - "autoclave"
+      - "sterilize"
+      - "sterilization"
+      - "121°C"
+    trigger_keywords_zh:
+      - "高压灭菌"
+      - "灭菌"
+      - "121°C"
+      - "消毒"
+
+  - id: OP020
+    name_en: "Spraying"
+    name_zh: "喷雾操作"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal", "ocular"]
+    aerosol_generation: true
+    requires_containment: true
+    risk_modifier: 12
+    trigger_keywords_en:
+      - "spray"
+      - "spraying"
+      - "aerosol"
+      - "atomiz"
+      - "nebulize"
+      - "mist"
+    trigger_keywords_zh:
+      - "喷雾"
+      - "气溶胶"
+      - "雾化"
+      - "喷洒"
+
+  - id: OP021
+    name_en: "Powder Weighing"
+    name_zh: "粉末称量"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal"]
+    powder_handling: true
+    aerosol_generation: true
+    requires_containment: true
+    risk_modifier: 10
+    trigger_keywords_en:
+      - "weigh"
+      - "weight"
+      - "powder"
+      - "solid"
+      - "granule"
+      - "crystalline"
+      - "lyophilized"
+      - "balance"
+    trigger_keywords_zh:
+      - "称量"
+      - "称取"
+      - "称重"
+      - "粉末"
+      - "固体"
+      - "颗粒"
+      - "冻干粉"
+      - "天平"
+
+  - id: OP022
+    name_en: "Open Container Handling"
+    name_zh: "敞口容器操作"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal", "ocular"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 12
+    trigger_keywords_en:
+      - "open"
+      - "uncovered"
+      - "beaker"
+      - "flask"
+      - "petri dish"
+      - "dish"
+      - "tray"
+      - "tank"
+      - "bath"
+    trigger_keywords_zh:
+      - "敞口"
+      - "烧杯"
+      - "烧瓶"
+      - "培养皿"
+      - "敞开的"
+      - "水浴"
+
+  - id: OP023
+    name_en: "Volatile Solvent Use"
+    name_zh: "挥发性溶剂使用"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal", "ocular"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 15
+    trigger_keywords_en:
+      - "volatile"
+      - "solvent"
+      - "organic solvent"
+      - "methanol"
+      - "ethanol"
+      - "acetone"
+      - "xylene"
+      - "toluene"
+      - "chloroform"
+      - "ether"
+      - "hexane"
+      - "acetonitrile"
+      - "THF"
+      - "DMSO"
+      - "DMF"
+      - "dichloromethane"
+      - "ethyl acetate"
+    trigger_keywords_zh:
+      - "挥发"
+      - "溶剂"
+      - "有机溶剂"
+      - "甲醇"
+      - "乙醇"
+      - "丙酮"
+      - "二甲苯"
+      - "甲苯"
+      - "氯仿"
+      - "乙醚"
+      - "己烷"
+      - "乙腈"
+      - "四氢呋喃"
+      - "DMSO"
+      - "DMF"
+      - "二氯甲烷"
+
+  - id: OP024
+    name_en: "Aerosol Generation"
+    name_zh: "气溶胶产生"
+    category: "chemical_handling"
+    primary_exposure_route: "inhalation"
+    secondary_exposure_routes: ["dermal", "ocular"]
+    aerosol_generation: true
+    requires_containment: true
+    risk_modifier: 15
+    trigger_keywords_en:
+      - "sonicate"
+      - "sonication"
+      - "vortex"
+      - "homogenize"
+      - "homogenization"
+      - "blend"
+      - "grind"
+      - "mortar"
+      - "pestle"
+      - "polytron"
+      - "ultrasonic"
+    trigger_keywords_zh:
+      - "超声"
+      - "涡旋"
+      - "匀浆"
+      - "研磨"
+      - "研钵"
+      - "碾碎"
+
+  # ── Biological Operations ──────────────────────────────────────
+  - id: OP030
+    name_en: "Cell Culture"
+    name_zh: "细胞培养"
+    category: "biological"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation", "ocular"]
+    requires_containment: true
+    risk_modifier: 5
+    trigger_keywords_en:
+      - "cell culture"
+      - "cell line"
+      - "culture medium"
+      - "DMEM"
+      - "RPMI"
+      - "FBS"
+      - "trypsinize"
+      - "passage"
+      - "confluent"
+      - "CO2 incubator"
+      - "biosafety cabinet"
+      - "BSC"
+      - "laminar flow"
+      - "antibiotic"
+      - "penicillin"
+      - "streptomycin"
+    trigger_keywords_zh:
+      - "细胞培养"
+      - "细胞系"
+      - "培养基"
+      - "胎牛血清"
+      - "胰酶消化"
+      - "传代"
+      - "汇合"
+      - "CO2培养箱"
+      - "超净台"
+      - "生物安全柜"
+      - "双抗"
+
+  - id: OP031
+    name_en: "Animal Experiment"
+    name_zh: "动物实验"
+    category: "biological"
+    primary_exposure_route: "injection"
+    secondary_exposure_routes: ["inhalation", "dermal"]
+    aerosol_generation: true
+    requires_containment: true
+    risk_modifier: 10
+    trigger_keywords_en:
+      - "mice"
+      - "mouse"
+      - "rat"
+      - "rabbit"
+      - "animal"
+      - "inject"
+      - "injection"
+      - "anesthetize"
+      - "anesthesia"
+      - "isoflurane"
+      - "ketamine"
+      - "xylazine"
+      - "sacrifice"
+      - "euthanize"
+      - "cervical dislocation"
+      - "perfusion"
+      - "vivarium"
+      - "animal facility"
+    trigger_keywords_zh:
+      - "小鼠"
+      - "大鼠"
+      - "兔子"
+      - "动物"
+      - "注射"
+      - "麻醉"
+      - "异氟烷"
+      - "处死"
+      - "安乐死"
+      - "动物房"
+
+  - id: OP032
+    name_en: "PCR"
+    name_zh: "聚合酶链式反应"
+    category: "analytical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation"]
+    risk_modifier: 3
+    trigger_keywords_en:
+      - "PCR"
+      - "qPCR"
+      - "RT-PCR"
+      - "thermal cycler"
+      - "polymerase"
+      - "primer"
+      - "dNTP"
+      - "Taq"
+      - "SYBR"
+      - "amplicon"
+      - "cDNA synthesis"
+      - "reverse transcription"
+    trigger_keywords_zh:
+      - "PCR"
+      - "聚合酶链式"
+      - "引物"
+      - "扩增"
+      - "qPCR"
+      - "逆转录"
+
+  - id: OP033
+    name_en: "Gel Electrophoresis"
+    name_zh: "凝胶电泳"
+    category: "analytical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation", "ocular"]
+    risk_modifier: 6
+    trigger_keywords_en:
+      - "electrophoresis"
+      - "gel"
+      - "SDS-PAGE"
+      - "agarose"
+      - "western blot"
+      - "Southern blot"
+      - "Northern blot"
+      - "loading dye"
+      - "DNA ladder"
+      - "protein ladder"
+      - "ethidium bromide"
+      - "EtBr"
+      - "SYBR Safe"
+      - "GelRed"
+      - "acrylamide"
+      - "bis-acrylamide"
+      - "TEMED"
+      - "APS"
+      - "running buffer"
+      - "transfer"
+      - "PVDF"
+      - "nitrocellulose"
+    trigger_keywords_zh:
+      - "电泳"
+      - "凝胶"
+      - "SDS-PAGE"
+      - "琼脂糖"
+      - "Western blot"
+      - "上样"
+      - "EB染色"
+      - "丙烯酰胺"
+      - "TEMED"
+      - "APS"
+      - "转膜"
+      - "PVDF"
+
+  - id: OP034
+    name_en: "Cryogenic Storage"
+    name_zh: "低温储存"
+    category: "physical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation"]
+    risk_modifier: 3
+    trigger_keywords_en:
+      - "liquid nitrogen"
+      - "LN2"
+      - "-80"
+      - "-20"
+      - "freeze"
+      - "frozen"
+      - "cryo"
+      - "cryopreservation"
+      - "DMSO"
+      - "glycerol stock"
+      - "thaw"
+      - "thawing"
+    trigger_keywords_zh:
+      - "液氮"
+      - "-80度"
+      - "-20度"
+      - "冷冻"
+      - "冻存"
+      - "解冻"
+      - "甘油保种"
+
+  - id: OP035
+    name_en: "Western Blot"
+    name_zh: "免疫印迹"
+    category: "analytical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation"]
+    requires_containment: true
+    risk_modifier: 8
+    trigger_keywords_en:
+      - "western"
+      - "immunoblot"
+      - "blocking buffer"
+      - "skim milk"
+      - "BSA"
+      - "primary antibody"
+      - "secondary antibody"
+      - "ECL"
+      - "chemiluminescence"
+      - "stripping buffer"
+      - "β-mercaptoethanol"
+      - "DTT"
+      - "PMSF"
+      - "protease inhibitor"
+      - "phosphatase inhibitor"
+      - "RIPA buffer"
+      - "lysis buffer"
+      - "sample buffer"
+    trigger_keywords_zh:
+      - "Western"
+      - "免疫印迹"
+      - "封闭"
+      - "一抗"
+      - "二抗"
+      - "化学发光"
+      - "裂解液"
+      - "蛋白酶抑制剂"
+      - "上样缓冲液"
+
+  - id: OP036
+    name_en: "Chromatography"
+    name_zh: "色谱层析"
+    category: "analytical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation"]
+    volatile_release: true
+    requires_containment: true
+    risk_modifier: 8
+    trigger_keywords_en:
+      - "chromatography"
+      - "HPLC"
+      - "FPLC"
+      - "LC-MS"
+      - "GC-MS"
+      - "column"
+      - "resin"
+      - "Ni-NTA"
+      - "ion exchange"
+      - "size exclusion"
+      - "affinity"
+      - "elution"
+      - "gradient"
+      - "acetonitrile"
+      - "TFA"
+      - "formic acid"
+      - "imidazole"
+    trigger_keywords_zh:
+      - "色谱"
+      - "层析"
+      - "HPLC"
+      - "液相"
+      - "气相"
+      - "质谱"
+      - "过柱"
+      - "Ni-NTA"
+      - "离子交换"
+      - "分子筛"
+      - "洗脱"
+
+  # ── Physical Operations ────────────────────────────────────────
+  - id: OP040
+    name_en: "Dissection"
+    name_zh: "解剖"
+    category: "biological"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["inhalation", "injection"]
+    requires_containment: true
+    risk_modifier: 8
+    trigger_keywords_en:
+      - "dissect"
+      - "dissection"
+      - "surgery"
+      - "surgical"
+      - "isolate tissue"
+      - "harvest"
+      - "organ"
+      - "brain"
+      - "liver"
+      - "kidney"
+      - "heart"
+      - "lung"
+      - "spleen"
+      - "gonad"
+      - "uterus"
+      - "ovary"
+      - "testis"
+    trigger_keywords_zh:
+      - "解剖"
+      - "手术"
+      - "取组织"
+      - "取材"
+      - "器官"
+      - "大脑"
+      - "肝脏"
+      - "肾脏"
+
+  - id: OP041
+    name_en: "Microscopy"
+    name_zh: "显微镜观察"
+    category: "analytical"
+    primary_exposure_route: "dermal"
+    secondary_exposure_routes: ["ocular"]
+    risk_modifier: 2
+    trigger_keywords_en:
+      - "microscope"
+      - "microscopy"
+      - "imaging"
+      - "confocal"
+      - "fluorescence"
+      - "brightfield"
+      - "phase contrast"
+      - "DIC"
+      - "objective"
+      - "slide"
+      - "immersion oil"
+    trigger_keywords_zh:
+      - "显微镜"
+      - "共聚焦"
+      - "荧光"
+      - "成像"
+      - "镜检"
+      - "油镜"

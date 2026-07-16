@@ -1,0 +1,257 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  body {
+    @apply bg-cream-50 text-neutral-800 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection {
+    @apply bg-rose-100 text-rose-900;
+  }
+  h1, h2, h3, h4 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  /* ── Medical Card System ─────────────────── */
+  .med-card {
+    @apply bg-white rounded-2xl border border-neutral-100 shadow-card;
+  }
+  .med-card-accent {
+    @apply med-card border-l-[3px];
+  }
+
+  /* ── Risk Badges ─────────────────────────── */
+  .med-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold tracking-wide;
+  }
+  .med-badge-critical  { @apply med-badge bg-red-50 text-red-800 border border-red-200; }
+  .med-badge-high      { @apply med-badge bg-orange-50 text-orange-800 border border-orange-200; }
+  .med-badge-moderate  { @apply med-badge bg-amber-50 text-amber-800 border border-amber-200; }
+  .med-badge-low       { @apply med-badge bg-sage-50 text-sage-700 border border-sage-200; }
+  .med-badge-safe      { @apply med-badge bg-sage-50 text-sage-700 border border-sage-200; }
+
+  /* ── Buttons ─────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-rose-500 text-white hover:bg-rose-600 active:bg-rose-700 shadow-sm hover:shadow-md;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-50 active:bg-neutral-100;
+  }
+  .btn-ghost {
+    @apply btn text-neutral-600 hover:bg-neutral-100 active:bg-neutral-200;
+  }
+  .btn-danger {
+    @apply btn text-red-600 hover:bg-red-50 active:bg-red-100;
+  }
+  .btn-outline-rose {
+    @apply btn bg-white text-rose-600 border-2 border-rose-200 hover:border-rose-400 hover:bg-rose-50;
+  }
+
+  /* ── Section Title ───────────────────────── */
+  .section-title {
+    @apply text-lg font-bold text-neutral-800 flex items-center gap-2.5 mb-5;
+  }
+  .section-icon {
+    @apply w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0;
+  }
+
+  /* ── Tags ────────────────────────────────── */
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-semibold uppercase tracking-widest;
+  }
+
+  /* ── Progress Bar ────────────────────────── */
+  .progress-bar {
+    @apply h-2 rounded-full bg-neutral-100 overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-1000 ease-out;
+  }
+
+  /* ── Reason / Explanation Box ────────────── */
+  .explanation-box {
+    @apply text-sm text-neutral-600 leading-relaxed bg-neutral-50/80 rounded-xl p-4 border border-neutral-200/50;
+  }
+
+  /* ── Evidence Source Tag ─────────────────── */
+  .evidence-tag {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-3xs font-semibold bg-rose-50 text-rose-700 border border-rose-200;
+  }
+
+  /* ── Trust Indicator ────────────────────── */
+  .trust-item {
+    @apply flex items-center gap-2.5 text-sm text-neutral-600;
+  }
+  .trust-check {
+    @apply w-5 h-5 rounded-full bg-sage-100 flex items-center justify-center flex-shrink-0;
+  }
+}
+
+/* ── Print ─────────────────────────────────── */
+@media print {
+  /* ── Base ────────────────────────────────── */
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ── Hide interactive UI, preserve content ── */
+  .no-print { display: none !important; }
+  nav, header.sticky, header.fixed { position: static !important; }
+
+  /* ── Cards: flat borders, no shadows, no glass ── */
+  .med-card,
+  .card,
+  .ehs-card,
+  [class*="rounded-2xl"] {
+    box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    border-radius: 8px !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── Remove all shadows and blurs ─────────── */
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* ── Buttons: hide action buttons only ────── */
+  a[href]:not([href^="#"]):not([href^="/report"]):after {
+    /* Don't show external URLs — too noisy */
+  }
+
+  /* ── Colors: ensure readability ───────────── */
+  .text-neutral-400, .text-neutral-500 { color: #666 !important; }
+  .text-neutral-600, .text-neutral-700 { color: #444 !important; }
+  .text-neutral-800, .text-neutral-900 { color: #1a1a1a !important; }
+  .text-red-700, .text-red-800 { color: #991b1b !important; }
+  .text-orange-700, .text-orange-800 { color: #9a3412 !important; }
+  .text-amber-700, .text-amber-800 { color: #92400e !important; }
+  .text-sage-700 { color: #166534 !important; }
+  .text-rose-700 { color: #9d174d !important; }
+
+  /* Backgrounds: flatten colored backgrounds */
+  .bg-rose-50, .bg-rose-50\/80, .bg-rose-50\/50, .bg-rose-50\/30 { background: #fdf2f4 !important; }
+  .bg-red-50, .bg-red-50\/80, .bg-red-50\/50, .bg-red-50\/30 { background: #fef2f2 !important; }
+  .bg-orange-50 { background: #fff7ed !important; }
+  .bg-amber-50\/40, .bg-amber-50\/50, .bg-amber-50\/70 { background: #fefce8 !important; }
+  .bg-sage-50 { background: #f0fdf4 !important; }
+  .bg-neutral-50, .bg-neutral-50\/80, .bg-neutral-50\/50 { background: #fafafa !important; }
+  .bg-neutral-100 { background: #f5f5f5 !important; }
+  .bg-cream-50 { background: white !important; }
+  .bg-white\/80, .bg-white\/90, .bg-white\/85 { background: white !important; }
+
+  /* Borders: consistent thin gray */
+  .border-neutral-100, .border-neutral-200, .border-neutral-300,
+  .border-rose-100, .border-rose-200,
+  .border-amber-200, .border-red-100, .border-red-200,
+  .border-sage-200, .border-orange-200 {
+    border-color: #d4d4d4 !important;
+  }
+  .border-l-red-500, .border-l-red-400 { border-left-color: #991b1b !important; }
+  .border-l-orange-400 { border-left-color: #c2410c !important; }
+  .border-l-amber-300 { border-left-color: #d97706 !important; }
+  .border-l-rose-400 { border-left-color: #e88ba7 !important; }
+
+  /* ── Tags/Badges: solid borders for print ─── */
+  .med-badge, .tag, .evidence-tag, .ehs-tag, .ehs-source {
+    border: 1px solid currentColor !important;
+  }
+
+  /* ── Progress bars: simplified ────────────── */
+  .progress-bar { background: #e5e5e5 !important; }
+  .progress-fill { background: #4a4a4a !important; }
+
+  /* ── Explanation boxes ────────────────────── */
+  .explanation-box {
+    background: #fafafa !important;
+    border: 1px solid #d4d4d4 !important;
+  }
+
+  /* ── Page breaks: keep sections together ──── */
+  section[class*="mb-8"],
+  section[class*="mb-6"],
+  .med-card[class*="mb-"],
+  .ehs-card[class*="mb-"] {
+    page-break-inside: avoid;
+  }
+  .med-card {
+    page-break-inside: avoid;
+  }
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* ── A4 width constraint ──────────────────── */
+  @page {
+    size: A4;
+    margin: 15mm 12mm;
+  }
+
+  /* ── Ensure all hidden content is visible ─── */
+  [class*="hidden"]:not(.sm\:flex):not(.md\:flex):not(.lg\:flex) {
+    /* Don't force-show responsive-hidden elements */
+  }
+}
+
+/* ── Print utility classes (Tailwind print: prefix) ── */
+/* These layer on top of the @media print rules above */
+
+/* Show all card content in print */
+@media print {
+  /* Chemical cards: always show expanded detail */
+  .print-expand > div:last-child,
+  [class*="animate-expand-down"] {
+    display: block !important;
+    max-height: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Hide expand/collapse indicators */
+  .print-hide-chevron { display: none !important; }
+
+  /* Hide action buttons */
+  .print-hide-btn { display: none !important; }
+
+  /* Make chemical card buttons look like plain divs */
+  button.print-as-div {
+    pointer-events: none;
+    cursor: default;
+    background: transparent !important;
+  }
+}
+
+/* ── Accessibility ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Accessibility ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
