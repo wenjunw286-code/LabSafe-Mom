@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     )
 
     # ── OpenAI / LLM ──────────────────────────────────────────
-    openai_api_key: str = Field(default="sk-placeholder", repr=False)
+    openai_api_key: str = Field(default="", repr=False)
     openai_base_url: str = Field(default="")
     ai: AISettings = Field(default_factory=AISettings)
 

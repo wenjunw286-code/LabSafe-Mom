@@ -22,10 +22,6 @@ services:
       - key: DATABASE_URL_SYNC
         value: sqlite:///./labsafe.db
       - key: CORS_ORIGINS
-        value: '["http://localhost:3000"]'
+        value: '["https://lab-safe-mom.vercel.app","https://lab-safe-mom-wenjunw286-codes-projects.vercel.app","https://lab-safe-mom-git-main-wenjunw286-codes-projects.vercel.app","http://localhost:3000","http://localhost:3010"]'
       - key: AI_MODEL
         value: deepseek-v4-pro
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_BASE_URL
-        sync: false
