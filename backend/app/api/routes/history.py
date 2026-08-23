@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_async_db
+from app.api.deps import get_async_db, get_client_id
 from app.models.report import AnalysisReport
 from app.schemas.report import ReportListItem, ReportListResponse
 
@@ -21,21 +21,28 @@ async def list_reports(
     page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
     status: str = Query(default="", description="Filter by status"),
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
 ):
-    """List all analysis reports with pagination.
+    """List the current browser user's analysis reports with pagination.
 
     Results are ordered by creation date (newest first).
     """
     # Count total
-    count_query = select(func.count(AnalysisReport.id))
+    count_query = select(func.count(AnalysisReport.id)).where(
+        AnalysisReport.client_id == client_id
+    )
     if status:
         count_query = count_query.where(AnalysisReport.status == status)
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
     # Fetch page
-    query = select(AnalysisReport).order_by(AnalysisReport.created_at.desc())
+    query = (
+        select(AnalysisReport)
+        .where(AnalysisReport.client_id == client_id)
+        .order_by(AnalysisReport.created_at.desc())
+    )
     if status:
         query = query.where(AnalysisReport.status == status)
     query = query.offset((page - 1) * page_size).limit(page_size)
@@ -64,18 +71,41 @@ async def list_reports(
 @router.delete("/report/{report_id}")
 async def delete_report(
     report_id: int,
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Delete a report and its associated identified substances."""
     result = await db.execute(
-        select(AnalysisReport).where(AnalysisReport.id == report_id)
+        select(AnalysisReport).where(
+            AnalysisReport.id == report_id,
+            AnalysisReport.client_id == client_id,
+        )
     )
     report = result.scalar_one_or_none()
     if not report:
-        raise HTTPException(status_code=404, detail="报告不存在")
+        raise HTTPException(status_code=404, detail="Report not found")
 
     await db.delete(report)
     await db.commit()
 
-    logger.info("report_deleted", report_id=report_id)
-    return {"message": "报告已删除", "id": report_id}
+    logger.info("report_deleted", report_id=report_id, client_id=client_id)
+    return {"message": "Report deleted", "id": report_id}
+
+
+@router.delete("/reports")
+async def delete_my_reports(
+    client_id: str = Depends(get_client_id),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Delete all reports owned by the current anonymous browser user."""
+    result = await db.execute(
+        select(AnalysisReport).where(AnalysisReport.client_id == client_id)
+    )
+    reports = result.scalars().all()
+    deleted = len(reports)
+    for report in reports:
+        await db.delete(report)
+    await db.commit()
+
+    logger.info("reports_deleted", deleted=deleted, client_id=client_id)
+    return {"message": "Reports deleted", "deleted": deleted}

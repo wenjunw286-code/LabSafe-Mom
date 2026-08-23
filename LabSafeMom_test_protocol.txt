@@ -1,0 +1,37 @@
+LabSafeMom Test Protocol
+
+Experiment title:
+Immunofluorescence fixation and staining workflow for cultured HeLa cells.
+
+Objective:
+Evaluate a typical cell biology protocol that includes fixatives, organic solvents,
+DNA stains, and standard exposure controls for pregnancy and lactation risk screening.
+
+Materials and reagents:
+- HeLa cells cultured on glass coverslips.
+- 4% paraformaldehyde (PFA) solution for fixation, 10 mL per sample batch.
+- Methanol, CAS 67-56-1, pre-chilled at -20 C, 20 mL.
+- Dimethyl sulfoxide (DMSO), CAS 67-68-5, used to dissolve a small-molecule inhibitor.
+- DAPI nuclear stain, stock solution diluted 1:1000.
+- Phosphate-buffered saline (PBS).
+- Blocking buffer containing bovine serum albumin.
+
+Procedure:
+1. Transfer coverslips into a certified chemical fume hood.
+2. Fix cells with 4% paraformaldehyde for 15 minutes at room temperature.
+3. Remove PFA waste into a labeled hazardous chemical waste bottle.
+4. Permeabilize cells with chilled methanol for 5 minutes.
+5. Prepare inhibitor working solution in DMSO at low volume under the fume hood.
+6. Stain nuclei with diluted DAPI for 5 minutes.
+7. Wash samples three times with PBS and mount coverslips.
+
+Exposure controls:
+- All fixation and solvent handling steps are performed in a chemical fume hood.
+- Operators wear a buttoned lab coat, safety goggles, and double nitrile gloves.
+- PFA and methanol waste are collected separately as hazardous waste.
+- Pregnant or lactating personnel should delegate PFA preparation and methanol handling when possible.
+
+Expected test behavior:
+The system should identify paraformaldehyde/PFA, methanol, DMSO, and DAPI.
+The final report should not return a zero score. PFA and methanol should contribute
+substantial pregnancy risk, while DMSO and DAPI should add route-specific caution.

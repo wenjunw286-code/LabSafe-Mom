@@ -5,6 +5,7 @@ import { BookOpen, Database, Filter, Search, ShieldAlert } from "lucide-react";
 import { searchSubstances } from "@/lib/api";
 import type { SubstanceSearchResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { englishCategory, englishEvidenceText, hasCjk } from "@/lib/knowledgeText";
 
 const riskFilters = ["", "High Risk", "Moderate Risk", "Low Risk", "Safe"];
 
@@ -142,7 +143,7 @@ export default function KnowledgePage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-bold text-neutral-900">{item.chemical_name}</h2>
                       {item.cas_number && <span className="tag bg-neutral-50 text-neutral-600 border border-neutral-200">CAS {item.cas_number}</span>}
-                      <span className="tag bg-rose-50 text-rose-700 border border-rose-200">{item.category}</span>
+                      <span className="tag bg-rose-50 text-rose-700 border border-rose-200">{englishCategory(item.category)}</span>
                     </div>
                     {item.ghs_classification && (
                       <p className="mt-2 text-sm text-neutral-600">{item.ghs_classification}</p>
@@ -167,21 +168,21 @@ export default function KnowledgePage() {
                       <ShieldAlert className="h-4 w-4 text-rose-700" />
                       Fetal / pregnancy evidence
                     </div>
-                    <p className="text-neutral-600 line-clamp-4">{item.effects_on_fetus || item.hazard_statements || "No specific fetal evidence recorded."}</p>
+                    <p className="text-neutral-600 line-clamp-4">{englishEvidenceText(item, "fetal")}</p>
                   </div>
                   <div className="rounded-lg bg-neutral-50 p-3">
                     <div className="mb-1 flex items-center gap-1.5 font-semibold text-neutral-800">
                       <BookOpen className="h-4 w-4 text-rose-700" />
                       Reproductive evidence
                     </div>
-                    <p className="text-neutral-600 line-clamp-4">{item.effects_on_reproduction || "No specific reproductive evidence recorded."}</p>
+                    <p className="text-neutral-600 line-clamp-4">{englishEvidenceText(item, "reproductive")}</p>
                   </div>
                   <div className="rounded-lg bg-neutral-50 p-3">
                     <div className="mb-1 flex items-center gap-1.5 font-semibold text-neutral-800">
                       <Database className="h-4 w-4 text-rose-700" />
                       Sources
                     </div>
-                    <p className="text-neutral-600 line-clamp-4">{item.references || "Source metadata not listed."}</p>
+                    <p className="text-neutral-600 line-clamp-4">{item.references && !hasCjk(item.references) ? item.references : "Source metadata not listed."}</p>
                   </div>
                 </div>
               </article>
@@ -192,4 +193,3 @@ export default function KnowledgePage() {
     </main>
   );
 }
-

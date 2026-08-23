@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_async_db
+from app.api.deps import get_async_db, get_client_id
 from app.models.report import AnalysisReport, IdentifiedSubstance
 from app.models.substance import HazardousSubstance
 from app.schemas.report import (
@@ -186,15 +186,22 @@ def _convert_v3_to_v2(report_json: dict, report_id: int, created_at) -> dict:
 
 
 @router.get("/report/{report_id}")
-async def get_report(report_id: int, db: AsyncSession = Depends(get_async_db)):
+async def get_report(
+    report_id: int,
+    client_id: str = Depends(get_client_id),
+    db: AsyncSession = Depends(get_async_db),
+):
     """Retrieve a completed analysis report by ID."""
     result = await db.execute(
-        select(AnalysisReport).where(AnalysisReport.id == report_id)
+        select(AnalysisReport).where(
+            AnalysisReport.id == report_id,
+            AnalysisReport.client_id == client_id,
+        )
     )
     report = result.scalar_one_or_none()
 
     if not report:
-        raise HTTPException(status_code=404, detail="报告不存在")
+        raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "completed":
         raise HTTPException(
             status_code=400,

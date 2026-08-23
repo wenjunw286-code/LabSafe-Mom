@@ -117,6 +117,20 @@ async def init_db() -> None:
     import app.models  # noqa: F401
     async with _async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_ensure_report_client_id_column)
+
+
+def _ensure_report_client_id_column(sync_conn) -> None:
+    """Add lightweight schema upgrades for deployments without migrations."""
+    from sqlalchemy import inspect
+
+    inspector = inspect(sync_conn)
+    columns = {column["name"] for column in inspector.get_columns("analysis_reports")}
+    if "client_id" not in columns:
+        sync_conn.execute(text("ALTER TABLE analysis_reports ADD COLUMN client_id VARCHAR(128)"))
+    sync_conn.execute(
+        text("CREATE INDEX IF NOT EXISTS ix_analysis_reports_client_id ON analysis_reports (client_id)")
+    )
 
 
 async def close_db() -> None:

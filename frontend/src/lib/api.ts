@@ -1,4 +1,5 @@
 import type { UploadResponse, AnalyzeStatusResponse, ReportDetail, ReportListResponse, SubstanceSearchResponse } from "./types";
+import { getClientId } from "./clientId";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
@@ -28,6 +29,7 @@ async function request<T>(
       ...options,
       signal: controller.signal,
       headers: {
+        "X-Client-Id": getClientId(),
         ...(options?.headers || {}),
       },
     });
@@ -210,6 +212,10 @@ export async function getReportHistory(
 
 export async function deleteReport(reportId: number): Promise<void> {
   await request(`/report/${reportId}`, { method: "DELETE" });
+}
+
+export async function deleteAllReports(): Promise<{ message: string; deleted: number }> {
+  return request("/reports", { method: "DELETE" });
 }
 
 // ── Substances ──────────────────────────────────────────────

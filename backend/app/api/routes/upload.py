@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_async_db, get_file_parser
+from app.api.deps import get_async_db, get_client_id, get_file_parser
 from app.config import settings
 from app.core.exceptions import FileParsingError
 from app.models.report import AnalysisReport
@@ -30,6 +30,7 @@ class TextUploadRequest(BaseModel):
 async def upload_file(
     request: Request,
     file: UploadFile = File(...),
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
     parser: FileParser = Depends(get_file_parser),
 ):
@@ -92,6 +93,7 @@ async def upload_file(
         file_type=ext,
         file_size=len(content),
         extracted_text=extracted_text,
+        client_id=client_id,
         status="pending",
     )
     db.add(report)
@@ -117,6 +119,7 @@ async def upload_file(
 @router.post("/upload/text", response_model=UploadResponse, status_code=201)
 async def upload_text_protocol(
     payload: TextUploadRequest,
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Create an analysis report directly from pasted protocol text."""
@@ -138,6 +141,7 @@ async def upload_text_protocol(
         file_type="txt",
         file_size=len(text.encode("utf-8")),
         extracted_text=text,
+        client_id=client_id,
         status="pending",
     )
     db.add(report)

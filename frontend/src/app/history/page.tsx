@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2, FileText, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { getReportHistory, deleteReport } from "@/lib/api";
+import { getReportHistory, deleteReport, deleteAllReports } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface ReportItem {
@@ -35,6 +35,7 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [deletingAll, setDeletingAll] = useState(false);
   const PAGE_SIZE = 20;
 
   const fetchReports = useCallback(async (p: number) => {
@@ -61,6 +62,22 @@ export default function HistoryPage() {
     } finally { setDeleting(null); }
   }, []);
 
+  const handleDeleteAll = useCallback(async () => {
+    if (total === 0) return;
+    if (!confirm(`Delete all ${total} report${total !== 1 ? "s" : ""} in your history? This only clears this browser's history and cannot be undone.`)) return;
+    setDeletingAll(true);
+    try {
+      await deleteAllReports();
+      setReports([]);
+      setTotal(0);
+      setPage(1);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete history");
+    } finally {
+      setDeletingAll(false);
+    }
+  }, [total]);
+
   const formatDate = (d: string | null) =>
     d ? new Date(d).toLocaleString("en-US", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-";
 
@@ -68,14 +85,26 @@ export default function HistoryPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-neutral-900">Analysis History</h1>
-          <p className="text-sm text-neutral-400 mt-1">{total} record{total !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-neutral-400 mt-1">{total} record{total !== 1 ? "s" : ""} saved in this browser</p>
         </div>
-        <button onClick={() => router.push("/")} className="btn-secondary text-sm">
-          <ArrowLeft className="w-4 h-4" /> New Analysis
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {total > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              disabled={deletingAll}
+              className="btn-danger text-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              {deletingAll ? "Deleting..." : "Delete All"}
+            </button>
+          )}
+          <button onClick={() => router.push("/")} className="btn-secondary text-sm">
+            <ArrowLeft className="w-4 h-4" /> New Analysis
+          </button>
+        </div>
       </div>
 
       {error && (

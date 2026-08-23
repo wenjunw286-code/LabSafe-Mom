@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal
 
-from app.api.deps import get_async_db
+from app.api.deps import get_async_db, get_client_id
 from app.db.database import AsyncSessionLocal
 from app.models.report import AnalysisReport, IdentifiedSubstance
 
@@ -705,6 +705,7 @@ async def trigger_analysis(
     report_id: int,
     background_tasks: BackgroundTasks,
     request: AnalyzeTriggerRequest | None = None,
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Trigger v3 deterministic safety analysis for an uploaded protocol.
@@ -719,7 +720,10 @@ async def trigger_analysis(
     population = request.population if request else "pregnancy"
 
     result = await db.execute(
-        select(AnalysisReport).where(AnalysisReport.id == report_id)
+        select(AnalysisReport).where(
+            AnalysisReport.id == report_id,
+            AnalysisReport.client_id == client_id,
+        )
     )
     report = result.scalar_one_or_none()
     if not report:
@@ -757,11 +761,15 @@ async def trigger_analysis(
 @router.get("/analyze/{report_id}/status", response_model=AnalyzeStatusResponse)
 async def get_analysis_status(
     report_id: int,
+    client_id: str = Depends(get_client_id),
     db: AsyncSession = Depends(get_async_db),
 ):
     """Poll for the current analysis status."""
     result = await db.execute(
-        select(AnalysisReport).where(AnalysisReport.id == report_id)
+        select(AnalysisReport).where(
+            AnalysisReport.id == report_id,
+            AnalysisReport.client_id == client_id,
+        )
     )
     report = result.scalar_one_or_none()
     if not report:

@@ -22,6 +22,7 @@ class AnalysisReport(Base):
     file_type: Mapped[str] = mapped_column(String(10), nullable=False)
     file_size: Mapped[int | None] = mapped_column(Integer, default=None)
     extracted_text: Mapped[str | None] = mapped_column(Text, default=None)
+    client_id: Mapped[str | None] = mapped_column(String(128), index=True, default=None)
 
     # Analysis results
     overall_risk: Mapped[str | None] = mapped_column(String(20), default=None)
