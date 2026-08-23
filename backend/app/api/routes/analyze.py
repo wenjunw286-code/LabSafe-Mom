@@ -18,9 +18,10 @@ from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Literal
 
 from app.api.deps import get_async_db
 from app.db.database import AsyncSessionLocal
@@ -41,6 +42,25 @@ class AnalyzeTriggerRequest(BaseModel):
         description="Target population: pregnancy, fertility, or lactation",
         pattern="^(pregnancy|fertility|lactation)$",
     )
+    analysis_mode: Literal["basic", "enhanced"] = Field(
+        default="basic",
+        description="basic: no AI calls; enhanced: use user-provided API key for AI assistance",
+    )
+    ai_api_key: SecretStr | None = Field(default=None, repr=False)
+    ai_base_url: str | None = Field(default=None, max_length=500)
+    ai_model: str | None = Field(default=None, max_length=120)
+
+    @model_validator(mode="after")
+    def _validate_ai_settings(self) -> "AnalyzeTriggerRequest":
+        if self.analysis_mode == "enhanced":
+            api_key = self.ai_api_key.get_secret_value().strip() if self.ai_api_key else ""
+            if not api_key:
+                raise ValueError("Enhanced mode requires the user's API key")
+        if self.ai_base_url is not None:
+            self.ai_base_url = self.ai_base_url.strip() or None
+        if self.ai_model is not None:
+            self.ai_model = self.ai_model.strip() or None
+        return self
 
 
 class AnalyzeTriggerResponse(BaseModel):
@@ -56,7 +76,12 @@ class AnalyzeStatusResponse(BaseModel):
 
 # ── Pipeline ─────────────────────────────────────────────────────
 
-async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> None:
+async def _run_analysis_v3(
+    report_id: int,
+    population: str = "pregnancy",
+    analysis_mode: str = "basic",
+    ai_config: dict[str, str | None] | None = None,
+) -> None:
     """Execute the full v3 deterministic analysis pipeline.
 
     This replaces the old LLM-heavy pipeline with a deterministic,
@@ -72,6 +97,8 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
     import time
 
     t_start = time.monotonic()
+    ai_config = ai_config or {}
+    ai_enabled = analysis_mode == "enhanced" and bool(ai_config.get("api_key"))
 
     # ═══════════════════════════════════════════════════════════════
     # PHASE 1: DB-dependent operations (keep session brief)
@@ -103,7 +130,11 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
             from app.services.extraction.pipeline import HybridExtractionPipeline
 
             extractor = HybridExtractionPipeline(db)
-            extraction_result = await extractor.extract(text)
+            extraction_result = await extractor.extract(
+                text,
+                allow_llm=ai_enabled,
+                llm_config=ai_config,
+            )
             normalized_chemicals = extraction_result.chemicals
 
             logger.info(
@@ -117,7 +148,12 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
             if not normalized_chemicals:
                 logger.info("analysis_no_chemicals", report_id=report_id)
                 report.report_json = _build_empty_report(
-                    report.original_filename, population, extraction_result
+                    report.original_filename,
+                    population,
+                    extraction_result,
+                    analysis_mode=analysis_mode,
+                    ai_enabled=ai_enabled,
+                    ai_model=ai_config.get("model") if ai_enabled else None,
                 )
                 report.overall_risk = "Low"
                 report.overall_score = 0
@@ -310,8 +346,15 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
                 "llm_fallback_used": _llm_fallback,
                 "total_raw": _total_raw,
                 "resolved": _resolved,
+                "analysis_mode": analysis_mode,
             },
         )
+        report_json["metadata"]["ai"] = {
+            "mode": analysis_mode,
+            "llm_extraction_enabled": ai_enabled,
+            "llm_summary_used": False,
+            "model": ai_config.get("model") if ai_enabled else None,
+        }
 
         # ── STAGE 9: Quality Control ─────────────────────────────
         logger.info("stage9_qc_start", report_id=report_id)
@@ -360,23 +403,33 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
     # ═══════════════════════════════════════════════════════════════
     # PHASE 3: LLM Summarization (NO DB — can be slow, safe to hang)
     # ═══════════════════════════════════════════════════════════════
-    logger.info("stage10_llm_summary_start", report_id=report_id)
-    try:
-        from app.services.llm.summarizer import LLMSummarizer
+    if ai_enabled:
+        logger.info("stage10_llm_summary_start", report_id=report_id)
+        try:
+            from app.services.llm.summarizer import LLMSummarizer
 
-        summarizer = LLMSummarizer()
-        summary = await asyncio.wait_for(
-            summarizer.summarize(report_json, population),
-            timeout=45.0,  # Hard timeout — use fallback if LLM is slow
-        )
-        report_json["executive_summary"]["summary_text"] = summary.summary_text
-        report_json["executive_summary"]["key_findings"] = summary.key_findings
-        report_json["executive_summary"]["general_recommendation"] = (
-            summary.general_recommendation
-        )
-        logger.info("stage10_llm_summary_done")
-    except (asyncio.TimeoutError, Exception) as exc:
-        logger.warning("llm_summary_skipped", error=str(exc))
+            summarizer = LLMSummarizer(
+                api_key=ai_config.get("api_key"),
+                base_url=ai_config.get("base_url"),
+                model=ai_config.get("model"),
+            )
+            summary = await asyncio.wait_for(
+                summarizer.summarize(report_json, population),
+                timeout=45.0,  # Hard timeout — use fallback if LLM is slow
+            )
+            report_json["executive_summary"]["summary_text"] = summary.summary_text
+            report_json["executive_summary"]["key_findings"] = summary.key_findings
+            report_json["executive_summary"]["general_recommendation"] = (
+                summary.general_recommendation
+            )
+            report_json["metadata"]["ai"]["llm_summary_used"] = True
+            logger.info("stage10_llm_summary_done")
+        except (asyncio.TimeoutError, Exception) as exc:
+            logger.warning("llm_summary_skipped", error=str(exc))
+            _apply_rule_based_summary(report_json)
+    else:
+        logger.info("stage10_llm_summary_disabled", report_id=report_id)
+        _apply_rule_based_summary(report_json)
 
     # ═══════════════════════════════════════════════════════════════
     # PHASE 4: Persist Results (new short-lived DB session)
@@ -472,6 +525,7 @@ async def _run_analysis_v3(report_id: int, population: str = "pregnancy") -> Non
                 rules_fired=len(all_rule_results),
                 evidence_citations=evidenced.total_citations,
                 qc_confidence=qc_result.confidence_score,
+                analysis_mode=analysis_mode,
                 elapsed_s=round(elapsed, 2),
             )
 
@@ -500,6 +554,9 @@ def _build_empty_report(
     filename: str,
     population: str,
     extraction_result,
+    analysis_mode: str = "basic",
+    ai_enabled: bool = False,
+    ai_model: str | None = None,
 ) -> dict:
     """Build an empty report when no chemicals are found."""
     from datetime import datetime, timezone
@@ -533,11 +590,63 @@ def _build_empty_report(
         "metadata": {
             "version": "3.0.0",
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "pipeline": {"extraction": {"methods_used": []}},
+            "pipeline": {
+                "extraction": {
+                    "methods_used": extraction_result.extraction_methods_used,
+                    "llm_fallback_used": extraction_result.llm_fallback_used,
+                    "total_raw": extraction_result.total_raw_extractions,
+                    "resolved": extraction_result.resolved_count,
+                    "analysis_mode": analysis_mode,
+                }
+            },
             "qc": {"passed": True, "confidence_score": 1.0},
+            "ai": {
+                "mode": analysis_mode,
+                "llm_extraction_enabled": ai_enabled,
+                "llm_summary_used": False,
+                "model": ai_model,
+            },
         },
         "disclaimer": "No hazardous substances identified. This does not guarantee safety.",
     }
+
+
+def _apply_rule_based_summary(report_json: dict) -> None:
+    """Attach a deterministic Chinese summary without calling any AI service."""
+    executive = report_json.setdefault("executive_summary", {})
+    substances = report_json.get("identified_hazardous_materials", [])
+    overall = report_json.get("overall_risk", executive.get("overall_risk", "Unknown"))
+    score = report_json.get("overall_score", executive.get("overall_score", 0))
+    total = len(substances)
+    high = sum(
+        1
+        for item in substances
+        if str(item.get("pregnancy_risk", "")).lower() in {"high", "critical"}
+        or "high" in str(item.get("pregnancy_risk", "")).lower()
+        or "critical" in str(item.get("pregnancy_risk", "")).lower()
+    )
+    critical_names = [
+        item.get("substance_name", "Unknown")
+        for item in substances
+        if "critical" in str(item.get("pregnancy_risk", "")).lower()
+    ][:5]
+
+    executive["summary_text"] = (
+        f"本报告基于内置知识库和确定性规则引擎生成，未调用 AI 模型。"
+        f"系统共识别 {total} 种相关物质，总体风险等级为 {overall}，评分为 {score}/100。"
+        f"其中 {high} 种物质触发较高孕期风险规则，请优先查看具体物质的风险原因、暴露路径和防护建议。"
+    )
+    executive["key_findings"] = [
+        f"总体风险等级：{overall}",
+        f"总体风险评分：{score}/100",
+        f"识别物质数量：{total} 种",
+        f"较高风险物质：{high} 种",
+    ]
+    if critical_names:
+        executive["key_findings"].append("需重点关注：" + "、".join(critical_names))
+    executive["general_recommendation"] = (
+        "建议将本报告作为初筛依据，并结合实验室 EHS、SDS 和医生/职业健康建议进行最终判断。"
+    )
 
 
 # ── Routes ───────────────────────────────────────────────────────
@@ -625,12 +734,22 @@ async def trigger_analysis(
     report.status = "processing"
     await db.commit()
 
-    background_tasks.add_task(_run_analysis_v3, report_id, population)
+    analysis_mode = request.analysis_mode if request else "basic"
+    ai_config = None
+    if request and request.analysis_mode == "enhanced":
+        ai_config = {
+            "api_key": request.ai_api_key.get_secret_value().strip() if request.ai_api_key else None,
+            "base_url": request.ai_base_url,
+            "model": request.ai_model or "gpt-4o-mini",
+        }
+
+    background_tasks.add_task(_run_analysis_v3, report_id, population, analysis_mode, ai_config)
 
     logger.info(
         "analysis_v3_triggered",
         report_id=report_id,
         population=population,
+        analysis_mode=analysis_mode,
     )
     return AnalyzeTriggerResponse(id=report.id, status="processing")
 

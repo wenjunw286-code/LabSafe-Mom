@@ -22,6 +22,7 @@ export default function TransparencyPanel({ report }: { report: ReportDetail }) 
   const substances = report.identified_hazardous_materials || [];
   const qc = metadata?.qc;
   const stats = qc?.stats;
+  const ai = metadata?.ai;
 
   return (
     <section className="space-y-4">
@@ -42,8 +43,29 @@ export default function TransparencyPanel({ report }: { report: ReportDetail }) 
           <p className="mt-2 text-xl font-bold text-neutral-900">{stats?.resolved_count ?? "-"}/{stats?.normalized_count ?? "-"}</p>
         </div>
         <div className="med-card p-4">
-          <p className="text-2xs font-semibold uppercase tracking-widest text-neutral-400">Rules fired</p>
-          <p className="mt-2 text-xl font-bold text-neutral-900">{metadata?.pipeline?.rules_fired ?? stats?.fired_rules ?? "-"}</p>
+          <p className="text-2xs font-semibold uppercase tracking-widest text-neutral-400">Analysis mode</p>
+          <p className="mt-2 text-xl font-bold text-neutral-900 capitalize">{ai?.mode || metadata?.pipeline?.extraction?.analysis_mode || "basic"}</p>
+        </div>
+      </div>
+
+      <div className="med-card p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <ListChecks className="h-4 w-4 text-rose-700" />
+          <h3 className="font-bold text-neutral-900">AI usage</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+          <div className="rounded-lg bg-neutral-50 p-3">
+            <span className="block text-xs font-semibold uppercase tracking-widest text-neutral-400">Mode</span>
+            <span className="mt-1 block font-semibold text-neutral-800 capitalize">{ai?.mode || "basic"}</span>
+          </div>
+          <div className="rounded-lg bg-neutral-50 p-3">
+            <span className="block text-xs font-semibold uppercase tracking-widest text-neutral-400">LLM extraction</span>
+            <span className="mt-1 block font-semibold text-neutral-800">{ai?.llm_extraction_enabled ? "Enabled" : "Disabled"}</span>
+          </div>
+          <div className="rounded-lg bg-neutral-50 p-3">
+            <span className="block text-xs font-semibold uppercase tracking-widest text-neutral-400">LLM summary</span>
+            <span className="mt-1 block font-semibold text-neutral-800">{ai?.llm_summary_used ? "Used" : "Not used"}</span>
+          </div>
         </div>
       </div>
 
@@ -128,4 +150,3 @@ export default function TransparencyPanel({ report }: { report: ReportDetail }) 
     </section>
   );
 }
-

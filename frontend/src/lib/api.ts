@@ -105,8 +105,23 @@ export async function uploadFiles(files: File[]): Promise<{ uploaded: UploadResp
 
 export async function triggerAnalysis(
   reportId: number,
+  options?: {
+    analysis_mode?: "basic" | "enhanced";
+    ai_api_key?: string;
+    ai_base_url?: string;
+    ai_model?: string;
+  },
 ): Promise<{ id: number; status: string }> {
-  return request(`/analyze/${reportId}`, { method: "POST" });
+  return request(`/analyze/${reportId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      analysis_mode: options?.analysis_mode || "basic",
+      ai_api_key: options?.ai_api_key || undefined,
+      ai_base_url: options?.ai_base_url || undefined,
+      ai_model: options?.ai_model || undefined,
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 export async function getAnalysisStatus(

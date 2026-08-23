@@ -172,6 +172,7 @@ export interface PipelineMetadata {
     llm_fallback_used?: boolean;
     total_raw?: number;
     resolved?: number;
+    analysis_mode?: "basic" | "enhanced" | string;
   };
   operations_detected?: number;
   rules_fired?: number;
@@ -184,6 +185,12 @@ export interface ReportMetadata {
   generated_at: string;
   pipeline: PipelineMetadata;
   qc: QCMetadata;
+  ai?: {
+    mode: "basic" | "enhanced" | string;
+    llm_extraction_enabled: boolean;
+    llm_summary_used: boolean;
+    model: string | null;
+  };
 }
 
 // ── Legacy types (v2) ───────────────────────────────────────────

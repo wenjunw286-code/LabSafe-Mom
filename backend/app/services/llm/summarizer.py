@@ -89,15 +89,23 @@ CRITICAL RULES:
 8. NEVER use phrases like "I think", "in my opinion", or "it might be".
 """
 
-    def __init__(self):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        model: str | None = None,
+    ):
         self._client: AsyncOpenAI | None = None
+        self._api_key = api_key or settings.openai_api_key
+        self._base_url = base_url if base_url is not None else settings.openai_base_url
+        self._model = model or settings.ai.model
 
     @property
     def client(self) -> AsyncOpenAI:
         if self._client is None:
             self._client = AsyncOpenAI(
-                api_key=settings.openai_api_key,
-                base_url=settings.openai_base_url or None,
+                api_key=self._api_key,
+                base_url=self._base_url or None,
                 timeout=settings.ai.request_timeout,
                 max_retries=0,  # Retry is handled by @ai_retry decorator
             )
@@ -123,7 +131,7 @@ CRITICAL RULES:
 
         try:
             response = await self.client.chat.completions.create(
-                model=settings.ai.model,
+                model=self._model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
@@ -178,7 +186,7 @@ Return JSON with:
 
         try:
             response = await self.client.chat.completions.create(
-                model=settings.ai.model,
+                model=self._model,
                 messages=[
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},

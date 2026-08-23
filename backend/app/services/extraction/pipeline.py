@@ -67,7 +67,12 @@ class HybridExtractionPipeline:
         # 只在 extract 中动态创建
         self._normalizer = ChemicalNormalizer(db)
 
-    async def extract(self, text: str) -> ExtractionResult:
+    async def extract(
+        self,
+        text: str,
+        allow_llm: bool = True,
+        llm_config: dict[str, str | None] | None = None,
+    ) -> ExtractionResult:
         """Run the full hybrid extraction pipeline.
 
         Args:
@@ -145,12 +150,17 @@ class HybridExtractionPipeline:
             )
         )
 
-        if needs_llm:
+        if needs_llm and allow_llm:
             logger.info("llm_fallback_triggered", reason="insufficient_coverage")
             try:
                 from app.services.extraction.llm_extractor import LLMExtractor
 
-                llm_extractor = LLMExtractor()
+                llm_config = llm_config or {}
+                llm_extractor = LLMExtractor(
+                    api_key=llm_config.get("api_key"),
+                    base_url=llm_config.get("base_url"),
+                    model=llm_config.get("model"),
+                )
                 llm_results = await llm_extractor.extract(text)
                 if llm_results:
                     llm_names = [r.get("name", "") for r in llm_results if r.get("name")]

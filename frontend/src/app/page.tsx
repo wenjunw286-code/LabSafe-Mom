@@ -8,6 +8,10 @@ import FileUpload from "@/components/FileUpload";
 import { uploadFile, uploadProtocolText, triggerAnalysis } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
+type AnalysisMode = "basic" | "enhanced";
+
+const DEFAULT_AI_MODEL = "gpt-4o-mini";
+
 const trustItems = [
   "Protocol-based Risk Analysis",
   "Chemical Hazard Identification",
@@ -48,15 +52,37 @@ export default function HomePage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<"file" | "text">("file");
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>("basic");
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [aiBaseUrl, setAiBaseUrl] = useState("");
+  const [aiModel, setAiModel] = useState(DEFAULT_AI_MODEL);
   const [protocolTitle, setProtocolTitle] = useState("pasted_protocol");
   const [protocolText, setProtocolText] = useState("");
 
+  const getAnalysisOptions = () => {
+    if (analysisMode === "basic") {
+      return { analysis_mode: "basic" as const };
+    }
+    if (!aiApiKey.trim()) {
+      setError("Enhanced mode requires your own API key.");
+      return null;
+    }
+    return {
+      analysis_mode: "enhanced" as const,
+      ai_api_key: aiApiKey.trim(),
+      ai_base_url: aiBaseUrl.trim() || undefined,
+      ai_model: aiModel.trim() || DEFAULT_AI_MODEL,
+    };
+  };
+
   const handleUpload = async (file: File) => {
+    const analysisOptions = getAnalysisOptions();
+    if (!analysisOptions) return;
     setUploading(true);
     setError(null);
     try {
       const uploadRes = await uploadFile(file);
-      await triggerAnalysis(uploadRes.id);
+      await triggerAnalysis(uploadRes.id, analysisOptions);
       router.push(`/analysis/${uploadRes.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -69,11 +95,13 @@ export default function HomePage() {
       setError("Please paste a protocol with at least 20 characters.");
       return;
     }
+    const analysisOptions = getAnalysisOptions();
+    if (!analysisOptions) return;
     setUploading(true);
     setError(null);
     try {
       const uploadRes = await uploadProtocolText(protocolTitle, protocolText);
-      await triggerAnalysis(uploadRes.id);
+      await triggerAnalysis(uploadRes.id, analysisOptions);
       router.push(`/analysis/${uploadRes.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Text submission failed");
@@ -142,6 +170,73 @@ export default function HomePage() {
                       <ClipboardPaste className="h-4 w-4" />
                       Paste protocol
                     </button>
+                  </div>
+
+                  <div className="mb-4 rounded-xl border border-neutral-100 bg-neutral-50 p-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnalysisMode("basic");
+                          setError(null);
+                        }}
+                        className={cn(
+                          "rounded-lg border px-3 py-3 text-left transition-colors",
+                          analysisMode === "basic"
+                            ? "border-sage-200 bg-white text-sage-800 shadow-sm"
+                            : "border-transparent bg-transparent text-neutral-500 hover:bg-white",
+                        )}
+                      >
+                        <span className="block text-sm font-bold">Basic mode</span>
+                        <span className="mt-1 block text-xs leading-relaxed">Rule-based analysis, no AI calls, no API quota use.</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnalysisMode("enhanced");
+                          setError(null);
+                        }}
+                        className={cn(
+                          "rounded-lg border px-3 py-3 text-left transition-colors",
+                          analysisMode === "enhanced"
+                            ? "border-rose-200 bg-white text-rose-800 shadow-sm"
+                            : "border-transparent bg-transparent text-neutral-500 hover:bg-white",
+                        )}
+                      >
+                        <span className="block text-sm font-bold">Enhanced mode</span>
+                        <span className="mt-1 block text-xs leading-relaxed">Use your own API key for AI extraction and summary.</span>
+                      </button>
+                    </div>
+
+                    {analysisMode === "enhanced" ? (
+                      <div className="mt-3 grid grid-cols-1 gap-2">
+                        <input
+                          value={aiApiKey}
+                          onChange={(event) => setAiApiKey(event.target.value)}
+                          type="password"
+                          autoComplete="off"
+                          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                          placeholder="Your API key"
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            value={aiBaseUrl}
+                            onChange={(event) => setAiBaseUrl(event.target.value)}
+                            className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                            placeholder="Base URL, optional"
+                          />
+                          <input
+                            value={aiModel}
+                            onChange={(event) => setAiModel(event.target.value)}
+                            className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-rose-300 focus:ring-2 focus:ring-rose-100"
+                            placeholder="Model"
+                          />
+                        </div>
+                        <p className="text-xs leading-relaxed text-neutral-400">
+                          The key is sent to the backend only for this analysis and is not saved in the report.
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
 
                   {inputMode === "file" ? (

@@ -1,0 +1,15 @@
+
+> labsafe-mom-frontend@1.0.0 dev
+> next dev -p 3010
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3010
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3s
+ ○ Compiling / ...
+ ✓ Compiled / in 2.5s (605 modules)
+ GET / 200 in 2941ms
+ ✓ Compiled in 308ms (310 modules)
+ GET / 200 in 87ms
